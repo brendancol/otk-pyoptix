@@ -48,10 +48,6 @@ Activate the environment:
 ```
 conda activate pyoptix
 ```
-The `pynvrtc` dependency, necessary for running the examples, needs to be installed via pip:
-```
-pip install pynvrtc
-```
 
 ### Building and installing the `optix` Python module
 Point `setuptools/CMake` to Optix by setting the following environment variable.
