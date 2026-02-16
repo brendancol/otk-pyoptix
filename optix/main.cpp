@@ -77,7 +77,13 @@ namespace py = pybind11;
 #if OPTIX_VERSION >= 70700
 #    define IF_OPTIX77( code ) code
 #else
-#    define IF_OPTIX77( code ) 
+#    define IF_OPTIX77( code )
+#endif
+
+#if OPTIX_VERSION >= 90100
+#    define IF_OPTIX91( code ) code
+#else
+#    define IF_OPTIX91( code )
 #endif
 
 
@@ -565,6 +571,7 @@ struct PipelineCompileOptions
         uint32_t  exceptionFlags,
         const char* pipelineLaunchParamsVariableName_
         IF_OPTIX71( COMMA int32_t  usesPrimitiveTypeFlags )
+        IF_OPTIX91( COMMA int32_t  allowClusteredGeometry )
         )
     {
         options.usesMotionBlur         = usesMotionBlur;
@@ -574,6 +581,9 @@ struct PipelineCompileOptions
         options.exceptionFlags         = exceptionFlags;
         IF_OPTIX71(
         options.usesPrimitiveTypeFlags = usesPrimitiveTypeFlags;
+        )
+        IF_OPTIX91(
+        options.allowClusteredGeometry = allowClusteredGeometry;
         )
         if( pipelineLaunchParamsVariableName_ )
             pipelineLaunchParamsVariableName =
@@ -1138,8 +1148,17 @@ py::object deviceContextGetProperty(
         case OPTIX_DEVICE_PROPERTY_LIMIT_MAX_INSTANCES_PER_IAS:
         case OPTIX_DEVICE_PROPERTY_RTCORE_VERSION:
         case OPTIX_DEVICE_PROPERTY_LIMIT_MAX_INSTANCE_ID:
-        case OPTIX_DEVICE_PROPERTY_LIMIT_NUM_BITS_INSTANCE_VISIBILITY_MASK: case OPTIX_DEVICE_PROPERTY_LIMIT_MAX_SBT_RECORDS_PER_GAS:
+        case OPTIX_DEVICE_PROPERTY_LIMIT_NUM_BITS_INSTANCE_VISIBILITY_MASK:
+        case OPTIX_DEVICE_PROPERTY_LIMIT_MAX_SBT_RECORDS_PER_GAS:
         case OPTIX_DEVICE_PROPERTY_LIMIT_MAX_SBT_OFFSET:
+#if OPTIX_VERSION >= 90100
+        case OPTIX_DEVICE_PROPERTY_COOP_VEC:
+        case OPTIX_DEVICE_PROPERTY_CLUSTER_ACCEL:
+        case OPTIX_DEVICE_PROPERTY_LIMIT_MAX_CLUSTER_VERTICES:
+        case OPTIX_DEVICE_PROPERTY_LIMIT_MAX_CLUSTER_TRIANGLES:
+        case OPTIX_DEVICE_PROPERTY_LIMIT_MAX_CLUSTER_SBT_INDEX:
+        case OPTIX_DEVICE_PROPERTY_LIMIT_MAX_CLUSTERS_PER_GAS:
+#endif
         {
             uint32_t value = 0u;
             PYOPTIX_CHECK(
@@ -2443,6 +2462,14 @@ PYBIND11_MODULE( _optix, m )
         .value( "DEVICE_PROPERTY_LIMIT_NUM_BITS_INSTANCE_VISIBILITY_MASK", OPTIX_DEVICE_PROPERTY_LIMIT_NUM_BITS_INSTANCE_VISIBILITY_MASK )
         .value( "DEVICE_PROPERTY_LIMIT_MAX_SBT_RECORDS_PER_GAS", OPTIX_DEVICE_PROPERTY_LIMIT_MAX_SBT_RECORDS_PER_GAS )
         .value( "DEVICE_PROPERTY_LIMIT_MAX_SBT_OFFSET", OPTIX_DEVICE_PROPERTY_LIMIT_MAX_SBT_OFFSET )
+        IF_OPTIX91(
+        .value( "DEVICE_PROPERTY_COOP_VEC", OPTIX_DEVICE_PROPERTY_COOP_VEC )
+        .value( "DEVICE_PROPERTY_CLUSTER_ACCEL", OPTIX_DEVICE_PROPERTY_CLUSTER_ACCEL )
+        .value( "DEVICE_PROPERTY_LIMIT_MAX_CLUSTER_VERTICES", OPTIX_DEVICE_PROPERTY_LIMIT_MAX_CLUSTER_VERTICES )
+        .value( "DEVICE_PROPERTY_LIMIT_MAX_CLUSTER_TRIANGLES", OPTIX_DEVICE_PROPERTY_LIMIT_MAX_CLUSTER_TRIANGLES )
+        .value( "DEVICE_PROPERTY_LIMIT_MAX_CLUSTER_SBT_INDEX", OPTIX_DEVICE_PROPERTY_LIMIT_MAX_CLUSTER_SBT_INDEX )
+        .value( "DEVICE_PROPERTY_LIMIT_MAX_CLUSTERS_PER_GAS", OPTIX_DEVICE_PROPERTY_LIMIT_MAX_CLUSTERS_PER_GAS )
+        )
         .export_values();
 
 #if OPTIX_VERSION >= 70200
@@ -2495,6 +2522,12 @@ PYBIND11_MODULE( _optix, m )
         .value( "PRIMITIVE_TYPE_ROUND_CUBIC_BSPLINE", OPTIX_PRIMITIVE_TYPE_ROUND_CUBIC_BSPLINE )
         .value( "PRIMITIVE_TYPE_ROUND_LINEAR", OPTIX_PRIMITIVE_TYPE_ROUND_LINEAR )
         .value( "PRIMITIVE_TYPE_TRIANGLE", OPTIX_PRIMITIVE_TYPE_TRIANGLE )
+        IF_OPTIX91(
+        .value( "PRIMITIVE_TYPE_ROUND_QUADRATIC_BSPLINE_ROCAPS", OPTIX_PRIMITIVE_TYPE_ROUND_QUADRATIC_BSPLINE_ROCAPS )
+        .value( "PRIMITIVE_TYPE_ROUND_CUBIC_BSPLINE_ROCAPS", OPTIX_PRIMITIVE_TYPE_ROUND_CUBIC_BSPLINE_ROCAPS )
+        .value( "PRIMITIVE_TYPE_ROUND_CATMULLROM_ROCAPS", OPTIX_PRIMITIVE_TYPE_ROUND_CATMULLROM_ROCAPS )
+        .value( "PRIMITIVE_TYPE_ROUND_CUBIC_BEZIER_ROCAPS", OPTIX_PRIMITIVE_TYPE_ROUND_CUBIC_BEZIER_ROCAPS )
+        )
         .export_values();
 
     py::enum_<OptixPrimitiveTypeFlags>(m, "PmitiveTypeFlags", py::arithmetic() )
@@ -2503,6 +2536,12 @@ PYBIND11_MODULE( _optix, m )
         .value( "PRIMITIVE_TYPE_FLAGS_ROUND_CUBIC_BSPLINE", OPTIX_PRIMITIVE_TYPE_FLAGS_ROUND_CUBIC_BSPLINE )
         .value( "PRIMITIVE_TYPE_FLAGS_ROUND_LINEAR", OPTIX_PRIMITIVE_TYPE_FLAGS_ROUND_LINEAR )
         .value( "PRIMITIVE_TYPE_FLAGS_TRIANGLE", OPTIX_PRIMITIVE_TYPE_FLAGS_TRIANGLE )
+        IF_OPTIX91(
+        .value( "PRIMITIVE_TYPE_FLAGS_ROUND_QUADRATIC_BSPLINE_ROCAPS", OPTIX_PRIMITIVE_TYPE_FLAGS_ROUND_QUADRATIC_BSPLINE_ROCAPS )
+        .value( "PRIMITIVE_TYPE_FLAGS_ROUND_CUBIC_BSPLINE_ROCAPS", OPTIX_PRIMITIVE_TYPE_FLAGS_ROUND_CUBIC_BSPLINE_ROCAPS )
+        .value( "PRIMITIVE_TYPE_FLAGS_ROUND_CATMULLROM_ROCAPS", OPTIX_PRIMITIVE_TYPE_FLAGS_ROUND_CATMULLROM_ROCAPS )
+        .value( "PRIMITIVE_TYPE_FLAGS_ROUND_CUBIC_BEZIER_ROCAPS", OPTIX_PRIMITIVE_TYPE_FLAGS_ROUND_CUBIC_BEZIER_ROCAPS )
+        )
         .export_values();
 #endif
 
@@ -3882,6 +3921,7 @@ py::enum_<OptixExceptionCodes>(m, "ExceptionCodes", py::arithmetic())
                 uint32_t,
                 const char*
                 IF_OPTIX71( COMMA int32_t )
+                IF_OPTIX91( COMMA int32_t )
 	    >(),
             py::arg( "usesMotionBlur" )=0,
             py::arg( "traversableGraphFlags" )=0u,
@@ -3890,6 +3930,7 @@ py::enum_<OptixExceptionCodes>(m, "ExceptionCodes", py::arithmetic())
             py::arg( "exceptionFlags" )=0u,
             py::arg( "pipelineLaunchParamsVariableName" )=nullptr
             IF_OPTIX71( COMMA py::arg( "usesPrimitiveTypeFlags" )=0 )
+            IF_OPTIX91( COMMA py::arg( "allowClusteredGeometry" )=0 )
             )
         .def_property( "usesMotionBlur",
             [](const pyoptix::PipelineCompileOptions& self)
@@ -3931,6 +3972,14 @@ py::enum_<OptixExceptionCodes>(m, "ExceptionCodes", py::arithmetic())
             { return self.options.usesPrimitiveTypeFlags; },
             [](pyoptix::PipelineCompileOptions& self, uint32_t val)
             { self.options.usesPrimitiveTypeFlags = val; }
+        )
+#endif
+#if OPTIX_VERSION >= 90100
+        .def_property( "allowClusteredGeometry",
+            [](const pyoptix::PipelineCompileOptions& self)
+            { return self.options.allowClusteredGeometry; },
+            [](pyoptix::PipelineCompileOptions& self, int val)
+            { self.options.allowClusteredGeometry = val; }
         )
 #endif
         ;
@@ -4159,4 +4208,289 @@ py::enum_<OptixExceptionCodes>(m, "ExceptionCodes", py::arithmetic())
            { return std::unique_ptr<OptixTraversableHandle>(new OptixTraversableHandle{} ); }
         ) )
         ;
+
+    // -----------------------------------------------------------------------
+    // OptiX 9.1+ Cluster Acceleration Structures
+    // -----------------------------------------------------------------------
+#if OPTIX_VERSION >= 90100
+
+    py::enum_<OptixClusterAccelBuildFlags>(m, "ClusterAccelBuildFlags", py::arithmetic())
+        .value( "CLUSTER_ACCEL_BUILD_FLAG_NONE", OPTIX_CLUSTER_ACCEL_BUILD_FLAG_NONE )
+        .value( "CLUSTER_ACCEL_BUILD_FLAG_PREFER_FAST_TRACE", OPTIX_CLUSTER_ACCEL_BUILD_FLAG_PREFER_FAST_TRACE )
+        .value( "CLUSTER_ACCEL_BUILD_FLAG_PREFER_FAST_BUILD", OPTIX_CLUSTER_ACCEL_BUILD_FLAG_PREFER_FAST_BUILD )
+        .value( "CLUSTER_ACCEL_BUILD_FLAG_ALLOW_OPACITY_MICROMAPS", OPTIX_CLUSTER_ACCEL_BUILD_FLAG_ALLOW_OPACITY_MICROMAPS )
+        .export_values();
+
+    py::enum_<OptixClusterAccelClusterFlags>(m, "ClusterAccelClusterFlags", py::arithmetic())
+        .value( "CLUSTER_ACCEL_CLUSTER_FLAG_NONE", OPTIX_CLUSTER_ACCEL_CLUSTER_FLAG_NONE )
+        .value( "CLUSTER_ACCEL_CLUSTER_FLAG_ALLOW_DISABLE_OPACITY_MICROMAPS", OPTIX_CLUSTER_ACCEL_CLUSTER_FLAG_ALLOW_DISABLE_OPACITY_MICROMAPS )
+        .export_values();
+
+    py::enum_<OptixClusterAccelPrimitiveFlags>(m, "ClusterAccelPrimitiveFlags", py::arithmetic())
+        .value( "CLUSTER_ACCEL_PRIMITIVE_FLAG_NONE", OPTIX_CLUSTER_ACCEL_PRIMITIVE_FLAG_NONE )
+        .value( "CLUSTER_ACCEL_PRIMITIVE_FLAG_DISABLE_TRIANGLE_FACE_CULLING", OPTIX_CLUSTER_ACCEL_PRIMITIVE_FLAG_DISABLE_TRIANGLE_FACE_CULLING )
+        .value( "CLUSTER_ACCEL_PRIMITIVE_FLAG_REQUIRE_SINGLE_ANYHIT_CALL", OPTIX_CLUSTER_ACCEL_PRIMITIVE_FLAG_REQUIRE_SINGLE_ANYHIT_CALL )
+        .value( "CLUSTER_ACCEL_PRIMITIVE_FLAG_DISABLE_ANYHIT", OPTIX_CLUSTER_ACCEL_PRIMITIVE_FLAG_DISABLE_ANYHIT )
+        .export_values();
+
+    py::enum_<OptixClusterAccelBuildType>(m, "ClusterAccelBuildType", py::arithmetic())
+        .value( "CLUSTER_ACCEL_BUILD_TYPE_GASES_FROM_CLUSTERS", OPTIX_CLUSTER_ACCEL_BUILD_TYPE_GASES_FROM_CLUSTERS )
+        .value( "CLUSTER_ACCEL_BUILD_TYPE_CLUSTERS_FROM_TRIANGLES", OPTIX_CLUSTER_ACCEL_BUILD_TYPE_CLUSTERS_FROM_TRIANGLES )
+        .value( "CLUSTER_ACCEL_BUILD_TYPE_TEMPLATES_FROM_TRIANGLES", OPTIX_CLUSTER_ACCEL_BUILD_TYPE_TEMPLATES_FROM_TRIANGLES )
+        .value( "CLUSTER_ACCEL_BUILD_TYPE_CLUSTERS_FROM_TEMPLATES", OPTIX_CLUSTER_ACCEL_BUILD_TYPE_CLUSTERS_FROM_TEMPLATES )
+        .value( "CLUSTER_ACCEL_BUILD_TYPE_TEMPLATES_FROM_GRIDS", OPTIX_CLUSTER_ACCEL_BUILD_TYPE_TEMPLATES_FROM_GRIDS )
+        .export_values();
+
+    py::enum_<OptixClusterAccelBuildMode>(m, "ClusterAccelBuildMode", py::arithmetic())
+        .value( "CLUSTER_ACCEL_BUILD_MODE_IMPLICIT_DESTINATIONS", OPTIX_CLUSTER_ACCEL_BUILD_MODE_IMPLICIT_DESTINATIONS )
+        .value( "CLUSTER_ACCEL_BUILD_MODE_EXPLICIT_DESTINATIONS", OPTIX_CLUSTER_ACCEL_BUILD_MODE_EXPLICIT_DESTINATIONS )
+        .value( "CLUSTER_ACCEL_BUILD_MODE_GET_SIZES", OPTIX_CLUSTER_ACCEL_BUILD_MODE_GET_SIZES )
+        .export_values();
+
+    py::enum_<OptixClusterAccelIndicesFormat>(m, "ClusterAccelIndicesFormat", py::arithmetic())
+        .value( "CLUSTER_ACCEL_INDICES_FORMAT_8BIT", OPTIX_CLUSTER_ACCEL_INDICES_FORMAT_8BIT )
+        .value( "CLUSTER_ACCEL_INDICES_FORMAT_16BIT", OPTIX_CLUSTER_ACCEL_INDICES_FORMAT_16BIT )
+        .value( "CLUSTER_ACCEL_INDICES_FORMAT_32BIT", OPTIX_CLUSTER_ACCEL_INDICES_FORMAT_32BIT )
+        .export_values();
+
+    py::enum_<OptixDevicePropertyClusterAccelFlags>(m, "DevicePropertyClusterAccelFlags", py::arithmetic())
+        .value( "DEVICE_PROPERTY_CLUSTER_ACCEL_FLAG_NONE", OPTIX_DEVICE_PROPERTY_CLUSTER_ACCEL_FLAG_NONE )
+        .value( "DEVICE_PROPERTY_CLUSTER_ACCEL_FLAG_STANDARD", OPTIX_DEVICE_PROPERTY_CLUSTER_ACCEL_FLAG_STANDARD )
+        .export_values();
+
+    // Cluster build input structs
+    py::class_<OptixClusterAccelBuildInputTriangles>(m, "ClusterAccelBuildInputTriangles")
+        .def( py::init([]() {
+            auto p = new OptixClusterAccelBuildInputTriangles{};
+            memset(p, 0, sizeof(*p));
+            return std::unique_ptr<OptixClusterAccelBuildInputTriangles>(p);
+        }))
+        .def_readwrite( "flags", &OptixClusterAccelBuildInputTriangles::flags )
+        .def_readwrite( "maxArgCount", &OptixClusterAccelBuildInputTriangles::maxArgCount )
+        .def_readwrite( "vertexFormat", &OptixClusterAccelBuildInputTriangles::vertexFormat )
+        .def_readwrite( "maxSbtIndexValue", &OptixClusterAccelBuildInputTriangles::maxSbtIndexValue )
+        .def_readwrite( "maxUniqueSbtIndexCountPerArg", &OptixClusterAccelBuildInputTriangles::maxUniqueSbtIndexCountPerArg )
+        .def_readwrite( "maxTriangleCountPerArg", &OptixClusterAccelBuildInputTriangles::maxTriangleCountPerArg )
+        .def_readwrite( "maxVertexCountPerArg", &OptixClusterAccelBuildInputTriangles::maxVertexCountPerArg )
+        .def_readwrite( "maxTotalTriangleCount", &OptixClusterAccelBuildInputTriangles::maxTotalTriangleCount )
+        .def_readwrite( "maxTotalVertexCount", &OptixClusterAccelBuildInputTriangles::maxTotalVertexCount )
+        .def_readwrite( "minPositionTruncateBitCount", &OptixClusterAccelBuildInputTriangles::minPositionTruncateBitCount )
+        ;
+
+    py::class_<OptixClusterAccelBuildInputClusters>(m, "ClusterAccelBuildInputClusters")
+        .def( py::init([]() {
+            auto p = new OptixClusterAccelBuildInputClusters{};
+            memset(p, 0, sizeof(*p));
+            return std::unique_ptr<OptixClusterAccelBuildInputClusters>(p);
+        }))
+        .def_readwrite( "flags", &OptixClusterAccelBuildInputClusters::flags )
+        .def_readwrite( "maxArgCount", &OptixClusterAccelBuildInputClusters::maxArgCount )
+        .def_readwrite( "maxTotalClusterCount", &OptixClusterAccelBuildInputClusters::maxTotalClusterCount )
+        .def_readwrite( "maxClusterCountPerArg", &OptixClusterAccelBuildInputClusters::maxClusterCountPerArg )
+        ;
+
+    py::class_<OptixClusterAccelBuildInputGrids>(m, "ClusterAccelBuildInputGrids")
+        .def( py::init([]() {
+            auto p = new OptixClusterAccelBuildInputGrids{};
+            memset(p, 0, sizeof(*p));
+            return std::unique_ptr<OptixClusterAccelBuildInputGrids>(p);
+        }))
+        .def_readwrite( "flags", &OptixClusterAccelBuildInputGrids::flags )
+        .def_readwrite( "maxArgCount", &OptixClusterAccelBuildInputGrids::maxArgCount )
+        .def_readwrite( "vertexFormat", &OptixClusterAccelBuildInputGrids::vertexFormat )
+        .def_readwrite( "maxSbtIndexValue", &OptixClusterAccelBuildInputGrids::maxSbtIndexValue )
+        .def_readwrite( "maxWidth", &OptixClusterAccelBuildInputGrids::maxWidth )
+        .def_readwrite( "maxHeight", &OptixClusterAccelBuildInputGrids::maxHeight )
+        ;
+
+    // Helper: unpack a Python dict into OptixClusterAccelBuildInput
+    auto _unpack_cluster_build_input = [](py::dict d) -> OptixClusterAccelBuildInput {
+        OptixClusterAccelBuildInput input{};
+        input.type = static_cast<OptixClusterAccelBuildType>( d["type"].cast<int>() );
+        switch( input.type )
+        {
+            case OPTIX_CLUSTER_ACCEL_BUILD_TYPE_CLUSTERS_FROM_TRIANGLES:
+            case OPTIX_CLUSTER_ACCEL_BUILD_TYPE_TEMPLATES_FROM_TRIANGLES:
+            {
+                py::dict td = d["triangles"].cast<py::dict>();
+                input.triangles.flags                     = static_cast<OptixClusterAccelBuildFlags>( td["flags"].cast<int>() );
+                input.triangles.maxArgCount               = td["maxArgCount"].cast<unsigned int>();
+                input.triangles.vertexFormat               = static_cast<OptixVertexFormat>( td["vertexFormat"].cast<int>() );
+                input.triangles.maxSbtIndexValue           = td["maxSbtIndexValue"].cast<unsigned int>();
+                input.triangles.maxUniqueSbtIndexCountPerArg = td["maxUniqueSbtIndexCountPerArg"].cast<unsigned int>();
+                input.triangles.maxTriangleCountPerArg     = td["maxTriangleCountPerArg"].cast<unsigned int>();
+                input.triangles.maxVertexCountPerArg       = td["maxVertexCountPerArg"].cast<unsigned int>();
+                input.triangles.maxTotalTriangleCount      = td["maxTotalTriangleCount"].cast<unsigned int>();
+                input.triangles.maxTotalVertexCount         = td["maxTotalVertexCount"].cast<unsigned int>();
+                input.triangles.minPositionTruncateBitCount = td["minPositionTruncateBitCount"].cast<unsigned int>();
+                break;
+            }
+            case OPTIX_CLUSTER_ACCEL_BUILD_TYPE_GASES_FROM_CLUSTERS:
+            case OPTIX_CLUSTER_ACCEL_BUILD_TYPE_CLUSTERS_FROM_TEMPLATES:
+            {
+                py::dict cd = d["clusters"].cast<py::dict>();
+                input.clusters.flags               = static_cast<OptixClusterAccelBuildFlags>( cd["flags"].cast<int>() );
+                input.clusters.maxArgCount         = cd["maxArgCount"].cast<unsigned int>();
+                input.clusters.maxTotalClusterCount = cd["maxTotalClusterCount"].cast<unsigned int>();
+                input.clusters.maxClusterCountPerArg = cd["maxClusterCountPerArg"].cast<unsigned int>();
+                break;
+            }
+            case OPTIX_CLUSTER_ACCEL_BUILD_TYPE_TEMPLATES_FROM_GRIDS:
+            {
+                py::dict gd = d["grids"].cast<py::dict>();
+                input.grids.flags           = static_cast<OptixClusterAccelBuildFlags>( gd["flags"].cast<int>() );
+                input.grids.maxArgCount     = gd["maxArgCount"].cast<unsigned int>();
+                input.grids.vertexFormat     = static_cast<OptixVertexFormat>( gd["vertexFormat"].cast<int>() );
+                input.grids.maxSbtIndexValue = gd["maxSbtIndexValue"].cast<unsigned int>();
+                input.grids.maxWidth         = gd["maxWidth"].cast<unsigned int>();
+                input.grids.maxHeight       = gd["maxHeight"].cast<unsigned int>();
+                break;
+            }
+        }
+        return input;
+    };
+
+    // Host functions: clusterAccelComputeMemoryUsage and clusterAccelBuild
+    m.def(
+        "clusterAccelComputeMemoryUsage",
+        [_unpack_cluster_build_input]( pyoptix::DeviceContext context,
+            OptixClusterAccelBuildMode buildMode,
+            py::dict buildInput )
+        {
+            OptixClusterAccelBuildInput input = _unpack_cluster_build_input( buildInput );
+
+            OptixAccelBufferSizes sizes{};
+            PYOPTIX_CHECK(
+                optixClusterAccelComputeMemoryUsage(
+                    context.deviceContext,
+                    buildMode,
+                    &input,
+                    &sizes
+                )
+            );
+            return sizes;
+        },
+        py::arg( "context" ),
+        py::arg( "buildMode" ),
+        py::arg( "buildInput" )
+    );
+
+    m.def(
+        "clusterAccelBuild",
+        [_unpack_cluster_build_input]( pyoptix::DeviceContext context,
+            uintptr_t stream,
+            OptixClusterAccelBuildMode buildMode,
+            py::dict buildInput,
+            uintptr_t outputBuffer,
+            size_t outputBufferSizeInBytes,
+            uintptr_t tempBuffer,
+            size_t tempBufferSizeInBytes,
+            uintptr_t outputHandlesBuffer,
+            unsigned int outputHandlesStrideInBytes,
+            uintptr_t outputSizesBuffer,
+            unsigned int outputSizesStrideInBytes,
+            uintptr_t argsArray,
+            uintptr_t argsCount,
+            unsigned int argsStrideInBytes )
+        {
+            OptixClusterAccelBuildInput input = _unpack_cluster_build_input( buildInput );
+
+            OptixClusterAccelBuildModeDesc modeDesc{};
+            modeDesc.mode = buildMode;
+            switch( buildMode )
+            {
+                case OPTIX_CLUSTER_ACCEL_BUILD_MODE_IMPLICIT_DESTINATIONS:
+                    modeDesc.implicitDest.outputBuffer               = static_cast<CUdeviceptr>( outputBuffer );
+                    modeDesc.implicitDest.outputBufferSizeInBytes     = outputBufferSizeInBytes;
+                    modeDesc.implicitDest.tempBuffer                  = static_cast<CUdeviceptr>( tempBuffer );
+                    modeDesc.implicitDest.tempBufferSizeInBytes       = tempBufferSizeInBytes;
+                    modeDesc.implicitDest.outputHandlesBuffer         = static_cast<CUdeviceptr>( outputHandlesBuffer );
+                    modeDesc.implicitDest.outputHandlesStrideInBytes  = outputHandlesStrideInBytes;
+                    modeDesc.implicitDest.outputSizesBuffer           = static_cast<CUdeviceptr>( outputSizesBuffer );
+                    modeDesc.implicitDest.outputSizesStrideInBytes    = outputSizesStrideInBytes;
+                    break;
+                case OPTIX_CLUSTER_ACCEL_BUILD_MODE_GET_SIZES:
+                    modeDesc.getSize.outputSizesBuffer           = static_cast<CUdeviceptr>( outputSizesBuffer );
+                    modeDesc.getSize.outputSizesStrideInBytes    = outputSizesStrideInBytes;
+                    modeDesc.getSize.tempBuffer                  = static_cast<CUdeviceptr>( tempBuffer );
+                    modeDesc.getSize.tempBufferSizeInBytes       = tempBufferSizeInBytes;
+                    break;
+                default:
+                    break;
+            }
+
+            PYOPTIX_CHECK(
+                optixClusterAccelBuild(
+                    context.deviceContext,
+                    static_cast<CUstream>( reinterpret_cast<void*>( stream ) ),
+                    &modeDesc,
+                    &input,
+                    static_cast<CUdeviceptr>( argsArray ),
+                    static_cast<CUdeviceptr>( argsCount ),
+                    argsStrideInBytes
+                )
+            );
+        },
+        py::arg( "context" ),
+        py::arg( "stream" ),
+        py::arg( "buildMode" ),
+        py::arg( "buildInput" ),
+        py::arg( "outputBuffer" ),
+        py::arg( "outputBufferSizeInBytes" ),
+        py::arg( "tempBuffer" ),
+        py::arg( "tempBufferSizeInBytes" ),
+        py::arg( "outputHandlesBuffer" ),
+        py::arg( "outputHandlesStrideInBytes" ),
+        py::arg( "outputSizesBuffer" ),
+        py::arg( "outputSizesStrideInBytes" ),
+        py::arg( "argsArray" ),
+        py::arg( "argsCount" ),
+        py::arg( "argsStrideInBytes" )
+    );
+
+    // -----------------------------------------------------------------------
+    // Cooperative Vectors (enums + structs — host functions need Blackwell)
+    // -----------------------------------------------------------------------
+
+    py::enum_<OptixDevicePropertyCoopVecFlags>(m, "DevicePropertyCoopVecFlags", py::arithmetic())
+        .value( "DEVICE_PROPERTY_COOP_VEC_FLAG_NONE", OPTIX_DEVICE_PROPERTY_COOP_VEC_FLAG_NONE )
+        .value( "DEVICE_PROPERTY_COOP_VEC_FLAG_STANDARD", OPTIX_DEVICE_PROPERTY_COOP_VEC_FLAG_STANDARD )
+        .export_values();
+
+    py::enum_<OptixCoopVecElemType>(m, "CoopVecElemType", py::arithmetic())
+        .value( "COOP_VEC_ELEM_TYPE_UNKNOWN", OPTIX_COOP_VEC_ELEM_TYPE_UNKNOWN )
+        .value( "COOP_VEC_ELEM_TYPE_FLOAT16", OPTIX_COOP_VEC_ELEM_TYPE_FLOAT16 )
+        .value( "COOP_VEC_ELEM_TYPE_FLOAT32", OPTIX_COOP_VEC_ELEM_TYPE_FLOAT32 )
+        .value( "COOP_VEC_ELEM_TYPE_UINT8", OPTIX_COOP_VEC_ELEM_TYPE_UINT8 )
+        .value( "COOP_VEC_ELEM_TYPE_INT8", OPTIX_COOP_VEC_ELEM_TYPE_INT8 )
+        .value( "COOP_VEC_ELEM_TYPE_UINT32", OPTIX_COOP_VEC_ELEM_TYPE_UINT32 )
+        .value( "COOP_VEC_ELEM_TYPE_INT32", OPTIX_COOP_VEC_ELEM_TYPE_INT32 )
+        .value( "COOP_VEC_ELEM_TYPE_FLOAT8_E4M3", OPTIX_COOP_VEC_ELEM_TYPE_FLOAT8_E4M3 )
+        .value( "COOP_VEC_ELEM_TYPE_FLOAT8_E5M2", OPTIX_COOP_VEC_ELEM_TYPE_FLOAT8_E5M2 )
+        .export_values();
+
+    py::enum_<OptixCoopVecMatrixLayout>(m, "CoopVecMatrixLayout", py::arithmetic())
+        .value( "COOP_VEC_MATRIX_LAYOUT_ROW_MAJOR", OPTIX_COOP_VEC_MATRIX_LAYOUT_ROW_MAJOR )
+        .value( "COOP_VEC_MATRIX_LAYOUT_COLUMN_MAJOR", OPTIX_COOP_VEC_MATRIX_LAYOUT_COLUMN_MAJOR )
+        .value( "COOP_VEC_MATRIX_LAYOUT_INFERENCING_OPTIMAL", OPTIX_COOP_VEC_MATRIX_LAYOUT_INFERENCING_OPTIMAL )
+        .value( "COOP_VEC_MATRIX_LAYOUT_TRAINING_OPTIMAL", OPTIX_COOP_VEC_MATRIX_LAYOUT_TRAINING_OPTIMAL )
+        .export_values();
+
+    py::class_<OptixCoopVecMatrixDescription>(m, "CoopVecMatrixDescription")
+        .def( py::init([]() {
+            auto p = new OptixCoopVecMatrixDescription{};
+            memset(p, 0, sizeof(*p));
+            return std::unique_ptr<OptixCoopVecMatrixDescription>(p);
+        }))
+        .def_readwrite( "N", &OptixCoopVecMatrixDescription::N )
+        .def_readwrite( "K", &OptixCoopVecMatrixDescription::K )
+        .def_readwrite( "offsetInBytes", &OptixCoopVecMatrixDescription::offsetInBytes )
+        .def_readwrite( "elementType", &OptixCoopVecMatrixDescription::elementType )
+        .def_readwrite( "layout", &OptixCoopVecMatrixDescription::layout )
+        .def_readwrite( "rowColumnStrideInBytes", &OptixCoopVecMatrixDescription::rowColumnStrideInBytes )
+        .def_readwrite( "sizeInBytes", &OptixCoopVecMatrixDescription::sizeInBytes )
+        ;
+
+#endif // OPTIX_VERSION >= 90100
+
 }
