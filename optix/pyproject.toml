@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools>=64", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pyoptix-contrib"
+version = "0.1.0"
+description = "Community-maintained Python bindings for NVIDIA OptiX (fork of otk-pyoptix with OptiX 9.1 support)"
+requires-python = ">=3.8"
+license = "BSD-3-Clause"
+authors = [
+    {name = "Brendan Collins"},
+    {name = "Keith Morley", email = "kmorley@nvidia.com"},
+]
+keywords = ["optix", "nvidia", "ray-tracing", "gpu", "cuda", "pybind11"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: BSD License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: C++",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Multimedia :: Graphics :: 3D Rendering",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: POSIX :: Linux",
+]
+
+[project.urls]
+Homepage = "https://github.com/brendancol/otk-pyoptix"
+Repository = "https://github.com/brendancol/otk-pyoptix"
+"Upstream (NVIDIA)" = "https://github.com/NVIDIA/otk-pyoptix"
+
+[project.optional-dependencies]
+test = ["pytest", "cupy", "numpy", "Pillow"]
+cuda = ["cuda-python"]

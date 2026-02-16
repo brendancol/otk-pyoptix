@@ -88,12 +88,6 @@ class CMakeBuild(build_ext):
 
 
 setup(
-    name='optix',
-    version='0.0.1',
-    author='Keith Morley',
-    author_email='kmorley@nvidia.com',
-    description='Python bindings for NVIDIA OptiX',
-    long_description='',
     ext_modules=[CMakeExtension('optix._optix')],
     cmdclass=dict(build_ext=CMakeBuild),
     zip_safe=False,
