@@ -6,6 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "pyoptix-contrib"
 version = "0.1.0"
 description = "Community-maintained Python bindings for NVIDIA OptiX (fork of otk-pyoptix with OptiX 9.1 support)"
+readme = "README.md"
 requires-python = ">=3.8"
 license = "BSD-3-Clause"
 authors = [
