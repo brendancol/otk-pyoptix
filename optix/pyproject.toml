@@ -17,7 +17,6 @@ classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
     "Intended Audience :: Science/Research",
-    "License :: OSI Approved :: BSD License",
     "Programming Language :: Python :: 3",
     "Programming Language :: C++",
     "Topic :: Scientific/Engineering",
@@ -34,3 +33,6 @@ Repository = "https://github.com/brendancol/otk-pyoptix"
 [project.optional-dependencies]
 test = ["pytest", "cupy", "numpy", "Pillow"]
 cuda = ["cuda-python"]
+
+[tool.setuptools.packages.find]
+include = ["optix*"]

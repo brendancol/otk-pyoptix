@@ -1,0 +1,5 @@
+include CMakeLists.txt
+include main.cpp
+recursive-include CMake *.cmake
+include optix_pkg/__init__.py
+include path_util.py.in
