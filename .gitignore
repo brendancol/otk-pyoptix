@@ -2,4 +2,6 @@ __pycache__/
 examples/my.png
 examples/path_util.py
 optix/build/
+optix/dist/
 optix/optix.egg-info/
+optix/pyoptix_contrib.egg-info/
