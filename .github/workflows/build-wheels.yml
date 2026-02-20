@@ -18,33 +18,23 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install CUDA Toolkit
-        uses: Jimver/cuda-toolkit@v0.2.21
-        id: cuda-toolkit
-        with:
-          cuda: '12.6.3'
-          method: network
-          sub-packages: '["nvcc", "cudart-dev", "cuda-driver-dev"]'
-
-      - name: Set up OptiX SDK headers
-        run: |
-          echo "${{ secrets.OPTIX_HEADERS_B64 }}" | base64 -d | tar xz -C ${{ github.workspace }}
-          echo "OptiX_INSTALL_DIR=${{ github.workspace }}/optix-sdk" >> $GITHUB_ENV
-
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.22
+        uses: pypa/cibuildwheel@v3.1
         with:
           package-dir: optix
           output-dir: wheelhouse
         env:
-          CIBW_BUILD: "cp39-manylinux_x86_64 cp310-manylinux_x86_64 cp311-manylinux_x86_64 cp312-manylinux_x86_64 cp313-manylinux_x86_64"
+          CIBW_BUILD: "cp39-manylinux_x86_64 cp310-manylinux_x86_64 cp311-manylinux_x86_64 cp312-manylinux_x86_64 cp313-manylinux_x86_64 cp314-manylinux_x86_64"
           CIBW_ENVIRONMENT: >-
             OptiX_INSTALL_DIR=/project/optix-sdk
+            CUDAToolkit_ROOT=/usr/local/cuda-12.6
+            PATH=/usr/local/cuda-12.6/bin:$PATH
           CIBW_BEFORE_ALL_LINUX: >-
-            yum install -y cmake3 &&
-            ln -sf /usr/bin/cmake3 /usr/local/bin/cmake ||
-            (apt-get update && apt-get install -y cmake) ||
-            true
+            dnf install -y 'dnf-command(config-manager)' &&
+            dnf config-manager --add-repo https://developer.download.nvidia.com/compute/cuda/repos/rhel8/x86_64/cuda-rhel8.repo &&
+            dnf install -y cmake cuda-nvcc-12-6 cuda-cudart-devel-12-6 cuda-driver-devel-12-6
+          CIBW_REPAIR_WHEEL_COMMAND_LINUX: >-
+            auditwheel repair --exclude libcuda.so.1 -w {dest_dir} {wheel}
           CIBW_MANYLINUX_X86_64_IMAGE: manylinux_2_28
 
       - uses: actions/upload-artifact@v4
